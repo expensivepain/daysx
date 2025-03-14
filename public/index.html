@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DaysX Mini App</title>
-  <link rel="stylesheet" href="/styles.css">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -12,14 +11,6 @@
   <div id="profile">
     <p>Balance: <span id="balance">Loading...</span></p>
     <p>Tokens: <span id="tokens">Loading...</span></p>
-  </div>
-  <div id="shop">
-    <button onclick="buyToken('happy_day')">Buy Happy Day (15 coins)</button>
-    <button onclick="buyToken('sad_day')">Buy Sad Day (50 coins)</button>
-  </div>
-  <div id="send">
-    <input type="text" id="tokenInput" placeholder="Enter token to send">
-    <button onclick="sendToken()">Send Token</button>
   </div>
 
   <script>
@@ -29,43 +20,16 @@
     async function loadProfile() {
       try {
         const response = await fetch(`/profile?userId=${userId}`);
-        const data = await response.json();
-        document.getElementById('balance').innerText = data.balance;
-        document.getElementById('tokens').innerText = data.tokens.join(', ') || 'None';
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById('balance').innerText = data.balance || 'N/A';
+          document.getElementById('tokens').innerText = data.tokens ? data.tokens.join(', ') : 'None';
+        } else {
+          document.getElementById('balance').innerText = 'Ошибка загрузки профиля';
+        }
       } catch (err) {
         console.error('Ошибка загрузки профиля:', err);
         document.getElementById('balance').innerText = 'Error';
-      }
-    }
-
-    async function buyToken(tokenType) {
-      try {
-        const response = await fetch(`/buy?userId=${userId}&token=${tokenType}`, { method: 'POST' });
-        const data = await response.json();
-        if (data.success) {
-          alert('Токен куплен!');
-          loadProfile();
-        } else {
-          alert('Ошибка: ' + data.error);
-        }
-      } catch (err) {
-        console.error('Ошибка покупки:', err);
-      }
-    }
-
-    async function sendToken() {
-      const tokenType = document.getElementById('tokenInput').value;
-      try {
-        const response = await fetch(`/send?userId=${userId}&token=${tokenType}`, { method: 'POST' });
-        const data = await response.json();
-        if (data.success) {
-          alert('Токен отправлен!');
-          loadProfile();
-        } else {
-          alert('Ошибка: ' + data.error);
-        }
-      } catch (err) {
-        console.error('Ошибка отправки:', err);
       }
     }
 

@@ -6,18 +6,9 @@ const path = require('path');
 const app = express();
 
 const token = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
-const bot = new TelegramBot(token);
+const bot = new TelegramBot(token, { polling: true }); // Polling для тестирования
 
-// Настройка вебхука
-const domain = process.env.VERCEL_URL || 'https://daysx.vercel.app';
-const webhookPath = '/webhook';
-bot.setWebHook(`${domain}${webhookPath}`).then(() => {
-  console.log(`Вебхук установлен: ${domain}${webhookPath}`);
-}).catch(err => {
-  console.error('Ошибка установки вебхука:', err.message);
-});
-
-// Подключение к Supabase с Transaction pooler
+// Подключение к Supabase через Transaction pooler
 const pool = new Pool({
   connectionString: 'postgresql://postgres.yspttofpgvxzypjgqbzj:snkljhavldsimspihu32123132@aws-0-eu-west-1.pooler.supabase.com:6543/postgres',
   ssl: { rejectUnauthorized: false }
@@ -70,12 +61,6 @@ pool.connect((err) => {
 app.use(express.json());
 app.use(express.static('public'));
 
-// Вебхук для Telegram
-app.post(webhookPath, (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
-});
-
 // Главная страница
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -87,7 +72,6 @@ app.get('/profile', async (req, res) => {
   console.log(`Запрос профиля для userId: ${userId}`);
   try {
     const { rows } = await pool.query('SELECT balance, tokens FROM users WHERE id = $1', [userId]);
-    console.log('Результат запроса:', rows);
     if (rows.length === 0) {
       await pool.query('INSERT INTO users (id, balance, tokens) VALUES ($1, 1000, $2)', [userId, '[]']);
       console.log(`Создан новый пользователь ${userId}`);
@@ -101,76 +85,13 @@ app.get('/profile', async (req, res) => {
   }
 });
 
-// Покупка токена
-app.post('/buy', async (req, res) => {
-  const userId = req.query.userId;
-  const tokenType = req.query.token;
-  console.log(`Покупка токена ${tokenType} для userId: ${userId}`);
-  try {
-    const { rows: tokenRows } = await pool.query('SELECT price, quantity FROM tokens WHERE type = $1', [tokenType]);
-    if (tokenRows.length === 0) return res.status(400).json({ success: false, error: 'Токен не найден' });
-    const token = tokenRows[0];
-    if (token.quantity <= 0) return res.status(400).json({ success: false, error: 'Токен распродан' });
-
-    const { rows: userRows } = await pool.query('SELECT balance, tokens FROM users WHERE id = $1', [userId]);
-    if (userRows.length === 0) return res.status(400).json({ success: false, error: 'Пользователь не найден' });
-    const user = userRows[0];
-    const balance = user.balance;
-    const tokens = JSON.parse(user.tokens);
-
-    if (balance < token.price) return res.status(400).json({ success: false, error: 'Недостаточно монет' });
-    const newBalance = balance - token.price;
-    tokens.push(tokenType);
-
-    await pool.query('UPDATE users SET balance = $1, tokens = $2 WHERE id = $3', [newBalance, JSON.stringify(tokens), userId]);
-    if (token.quantity < 9999) {
-      await pool.query('UPDATE tokens SET quantity = quantity - 1 WHERE type = $1', [tokenType]);
-    }
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Ошибка в /buy:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Отправка токена
-app.post('/send', async (req, res) => {
-  const userId = req.query.userId;
-  const tokenType = req.query.token;
-  console.log(`Отправка токена ${tokenType} для userId: ${userId}`);
-  try {
-    const { rows } = await pool.query('SELECT tokens FROM users WHERE id = $1', [userId]);
-    if (rows.length === 0) return res.status(400).json({ success: false, error: 'Пользователь не найден' });
-    let tokens = JSON.parse(rows[0].tokens);
-    if (!tokens.includes(tokenType)) return res.status(400).json({ success: false, error: 'Токен не найден' });
-
-    tokens = tokens.filter(t => t !== tokenType);
-    await pool.query('UPDATE users SET tokens = $1 WHERE id = $2', [JSON.stringify(tokens), userId]);
-    bot.sendMessage(userId, `Токен отправлен! Используй: @YourBotName ${tokenType}`, {
-      reply_markup: {
-        inline_keyboard: [[{ text: "Получить токен", url: `${req.protocol}://${req.get('host')}/claim?token=${tokenType}` }]]
-      }
-    });
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Ошибка в /send:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Получение токена
-app.get('/claim', (req, res) => {
-  const tokenType = req.query.token;
-  res.send(`Токен ${tokenType} получен! Добавь логику в Mini App.`);
-});
-
-// Обработка сообщений бота через вебхук
-bot.on('message', (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, 'Привет! Открой Mini App через меню.');
-});
-
 // Запуск сервера
 app.listen(process.env.PORT || 3000, () => {
   console.log('Сервер запущен');
+});
+
+// Обработка сообщений бота
+bot.on('message', (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, 'Привет! Открой Mini App через меню.');
 });
