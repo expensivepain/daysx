@@ -1,72 +1,82 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Days Mini App</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>DaysX Mini App</title>
+  <link rel="stylesheet" href="/styles.css">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  <div id="shop" class="tab active">
-    <h2>Магазин</h2>
-    <div class="item">Happy Day - 15 монет <button class="button" onclick="buyToken('happy_day')">Купить</button></div>
-    <div class="item">Sad Day - 50 монет (Ограничено) <button class="button" onclick="buyToken('sad_day')">Купить</button></div>
+  <h1>DaysX Mini App</h1>
+  <div id="profile">
+    <p>Balance: <span id="balance">Loading...</span></p>
+    <p>Tokens: <span id="tokens">Loading...</span></p>
   </div>
-  <div id="profile" class="tab">
-    <h2>Профиль</h2>
-    <p>Баланс: <span id="balance"></span> монет</p>
-    <p>Твои токены: <span id="tokens"></span></p>
-    <button class="button" onclick="sendToken()">Отправить токен</button>
+  <div id="shop">
+    <button onclick="buyToken('happy_day')">Buy Happy Day (15 coins)</button>
+    <button onclick="buyToken('sad_day')">Buy Sad Day (50 coins)</button>
   </div>
-  <div class="tabs">
-    <button onclick="switchTab('shop')">Магазин</button>
-    <button onclick="switchTab('profile')">Профиль</button>
+  <div id="send">
+    <input type="text" id="tokenInput" placeholder="Enter token to send">
+    <button onclick="sendToken()">Send Token</button>
   </div>
 
   <script>
-    function switchTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-    }
-
+    // Инициализация Telegram Web App
     window.Telegram.WebApp.ready();
-    const user = window.Telegram.WebApp.initDataUnsafe.user || { id: 'test_user' };
-    const host = window.location.origin; // Динамический хост для Render
 
-    async function buyToken(tokenType) {
-      const response = await fetch(`${host}/buy?userId=${user.id}&token=${tokenType}`, { method: 'POST' });
-      const data = await response.json();
-      if (data.success) {
-        alert('Токен куплен! Проверь профиль.');
-        updateProfile();
-      } else {
-        alert('Ошибка: ' + data.error);
+    // Получение userId из Telegram
+    const userId = window.Telegram.WebApp.initDataUnsafe.user?.id || '12345'; // Тестовый ID, если не в Telegram
+
+    // Загрузка профиля
+    async function loadProfile() {
+      try {
+        const response = await fetch(`/profile?userId=${userId}`);
+        const data = await response.json();
+        document.getElementById('balance').innerText = data.balance;
+        document.getElementById('tokens').innerText = data.tokens.join(', ') || 'None';
+      } catch (err) {
+        console.error('Ошибка загрузки профиля:', err);
+        document.getElementById('balance').innerText = 'Error';
       }
     }
 
-    async function sendToken() {
-      const token = prompt('Какой токен отправить? (happy_day или sad_day)');
-      if (token) {
-        const response = await fetch(`${host}/send?userId=${user.id}&token=${token}`, { method: 'POST' });
+    // Покупка токена
+    async function buyToken(tokenType) {
+      try {
+        const response = await fetch(`/buy?userId=${userId}&token=${tokenType}`, { method: 'POST' });
         const data = await response.json();
         if (data.success) {
-          alert('Токен отправлен!');
-          updateProfile();
+          alert('Токен куплен!');
+          loadProfile(); // Обновляем профиль
         } else {
           alert('Ошибка: ' + data.error);
         }
+      } catch (err) {
+        console.error('Ошибка покупки:', err);
       }
     }
 
-    async function updateProfile() {
-      const response = await fetch(`${host}/profile?userId=${user.id}`);
-      const data = await response.json();
-      document.getElementById('balance').innerText = data.balance;
-      document.getElementById('tokens').innerText = data.tokens.join(', ') || 'Нет токенов';
+    // Отправка токена
+    async function sendToken() {
+      const tokenType = document.getElementById('tokenInput').value;
+      try {
+        const response = await fetch(`/send?userId=${userId}&token=${tokenType}`, { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+          alert('Токен отправлен!');
+          loadProfile(); // Обновляем профиль
+        } else {
+          alert('Ошибка: ' + data.error);
+        }
+      } catch (err) {
+        console.error('Ошибка отправки:', err);
+      }
     }
 
-    updateProfile();
+    // Загружаем профиль при старте
+    loadProfile();
   </script>
 </body>
 </html>

@@ -1,40 +1,26 @@
 body {
   font-family: Arial, sans-serif;
-  background: #f0f0f0;
-  margin: 0;
   padding: 20px;
+  background-color: #f0f0f0;
+}
+h1 {
   text-align: center;
 }
-
-.tab {
-  display: none;
+#profile, #shop, #send {
+  margin: 20px 0;
 }
-
-.tab.active {
-  display: block;
-}
-
-.item {
-  margin: 10px 0;
-}
-
-.button {
-  padding: 10px 20px;
-  background: #007bff;
+button {
+  padding: 10px;
+  margin: 5px;
+  background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 5px;
   cursor: pointer;
 }
-
-.button:hover {
-  background: #0056b3;
+button:hover {
+  background-color: #0056b3;
 }
-
-.tabs {
-  margin-top: 20px;
-}
-
-.tabs button {
-  margin: 0 5px;
+input {
+  padding: 5px;
+  margin-right: 10px;
 }
