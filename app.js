@@ -6,7 +6,16 @@ const path = require('path');
 const app = express();
 
 const token = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token);
+
+// Настройка вебхука
+const domain = process.env.VERCEL_URL || 'https://daysx.vercel.app'; // URL твоего приложения
+const webhookPath = '/webhook';
+bot.setWebHook(`${domain}${webhookPath}`).then(() => {
+  console.log(`Вебхук установлен: ${domain}${webhookPath}`);
+}).catch(err => {
+  console.error('Ошибка установки вебхука:', err.message);
+});
 
 // Подключение к Supabase Postgres
 const pool = new Pool({
@@ -61,6 +70,13 @@ pool.connect((err) => {
 app.use(express.json());
 app.use(express.static('public'));
 
+// Вебхук для Telegram
+app.post(webhookPath, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
+
+// Главная страница
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -148,7 +164,7 @@ app.get('/claim', (req, res) => {
   res.send(`Токен ${tokenType} получен! Добавь логику в Mini App.`);
 });
 
-// Бот
+// Обработка сообщений бота через вебхук
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, 'Привет! Открой Mini App через меню.');

@@ -12,6 +12,10 @@
     ],
     "routes": [
       {
+        "src": "/webhook",
+        "dest": "app.js"
+      },
+      {
         "src": "/(profile|buy|send|claim)",
         "dest": "app.js"
       },

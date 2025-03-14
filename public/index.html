@@ -23,13 +23,9 @@
   </div>
 
   <script>
-    // Инициализация Telegram Web App
     window.Telegram.WebApp.ready();
+    const userId = window.Telegram.WebApp.initDataUnsafe.user?.id || '12345';
 
-    // Получение userId из Telegram
-    const userId = window.Telegram.WebApp.initDataUnsafe.user?.id || '12345'; // Тестовый ID, если не в Telegram
-
-    // Загрузка профиля
     async function loadProfile() {
       try {
         const response = await fetch(`/profile?userId=${userId}`);
@@ -42,14 +38,13 @@
       }
     }
 
-    // Покупка токена
     async function buyToken(tokenType) {
       try {
         const response = await fetch(`/buy?userId=${userId}&token=${tokenType}`, { method: 'POST' });
         const data = await response.json();
         if (data.success) {
           alert('Токен куплен!');
-          loadProfile(); // Обновляем профиль
+          loadProfile();
         } else {
           alert('Ошибка: ' + data.error);
         }
@@ -58,7 +53,6 @@
       }
     }
 
-    // Отправка токена
     async function sendToken() {
       const tokenType = document.getElementById('tokenInput').value;
       try {
@@ -66,7 +60,7 @@
         const data = await response.json();
         if (data.success) {
           alert('Токен отправлен!');
-          loadProfile(); // Обновляем профиль
+          loadProfile();
         } else {
           alert('Ошибка: ' + data.error);
         }
@@ -75,7 +69,6 @@
       }
     }
 
-    // Загружаем профиль при старте
     loadProfile();
   </script>
 </body>
