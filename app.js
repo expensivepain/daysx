@@ -9,7 +9,7 @@ const token = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
 const bot = new TelegramBot(token);
 
 // Настройка вебхука
-const domain = process.env.VERCEL_URL || 'https://daysx.vercel.app'; // URL твоего приложения
+const domain = process.env.VERCEL_URL || 'https://daysx.vercel.app';
 const webhookPath = '/webhook';
 bot.setWebHook(`${domain}${webhookPath}`).then(() => {
   console.log(`Вебхук установлен: ${domain}${webhookPath}`);
