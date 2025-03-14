@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const TelegramBot = require('node-telegram-bot-api');
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path'); // Добавляем модуль path для работы с путями
 const app = express();
 
 const token = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
@@ -31,6 +32,11 @@ const db = new sqlite3.Database('./database.db', (err) => {
 // Middleware для обработки JSON и статических файлов
 app.use(express.json());
 app.use(express.static('public'));
+
+// Добавляем маршрут для корневого пути
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Получение профиля
 app.get('/profile', (req, res) => {
@@ -106,7 +112,7 @@ bot.on('message', (msg) => {
   bot.sendMessage(chatId, 'Привет! Открой Mini App через меню.');
 });
 
-// Запуск сервера с динамическим портом для Render
+// Запуск сервера
 app.listen(process.env.PORT || 3000, () => {
   console.log('Сервер запущен');
 });
