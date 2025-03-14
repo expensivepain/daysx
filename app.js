@@ -17,9 +17,9 @@ bot.setWebHook(`${domain}${webhookPath}`).then(() => {
   console.error('Ошибка установки вебхука:', err.message);
 });
 
-// Подключение к Supabase Postgres
+// Подключение к Supabase с Transaction pooler
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: 'postgresql://postgres.yspttofpgvxzypjgqbzj:snkljhavldsimspihu32123132@aws-0-eu-west-1.pooler.supabase.com:6543/postgres',
   ssl: { rejectUnauthorized: false }
 });
 
