@@ -5,10 +5,11 @@ const { Pool } = require('pg');
 const path = require('path');
 const app = express();
 
+// Настройка бота на polling
 const token = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
-const bot = new TelegramBot(token, { polling: true }); // Polling для тестирования
+const bot = new TelegramBot(token, { polling: true });
 
-// Подключение к Supabase через Transaction pooler
+// Подключение к Supabase через Transaction Pooler
 const pool = new Pool({
   connectionString: 'postgresql://postgres.yspttofpgvxzypjgqbzj:snkljhavldsimspihu32123132@aws-0-eu-west-1.pooler.supabase.com:6543/postgres',
   ssl: { rejectUnauthorized: false }
@@ -81,7 +82,7 @@ app.get('/profile', async (req, res) => {
     }
   } catch (err) {
     console.error('Ошибка в /profile:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
